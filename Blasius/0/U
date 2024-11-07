@@ -1,0 +1,103 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       volVectorField;
+    location    "0";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0.88 0 0);
+
+boundaryField
+{
+    down
+    {
+        type            symmetry;
+    }
+    top
+    {
+        type            symmetry;
+    }
+    step
+    {
+        type            noSlip;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    inlet
+    {
+        type 		codedFixedValue; 
+	value 		uniform (0 0 0); 
+	name   		myBlasiusBC;
+ 
+	    code 
+	    #{ 
+		
+		    scalar U0 = 0.88; 
+		    scalar y0 = -0.0157;
+		
+		    scalar nu = 1e-06;
+		    scalar ReL = 8.8E6; 
+		
+		    scalar xx = (nu * ReL / U0) + SMALL;
+		    
+		    const fvPatch& myPatch = patch();
+		    const vectorField& Cf = myPatch.Cf();
+		    vectorField& field = *this;
+		    
+		    forAll(Cf, faceI)
+		    {
+			    scalar yy = mag(Cf[faceI].y() - y0);
+			    
+			    scalar eta = yy * sqrt(U0/(nu*xx));
+			
+			//curve fit to blasius solution 
+			    scalar fprime;
+			    if (eta <= 0.0) {
+	       			fprime = 0.0;						   
+      				}
+      			    else if (eta < 5.9064) {
+	       			fprime = -0.000005*pow(eta,6)-0.00005*pow(eta,5)+0.003*pow(eta,4)-0.0267*pow(eta,3)+0.0462*pow(eta,2)+0.3063*eta+0.0013;						   
+      				}
+      			    else{
+      				fprime = 1.0;	
+      				}
+      			
+      			scalar ux = fprime * U0;
+      			scalar uy = 0.0;
+      			scalar uz = 0.0;
+      			field[faceI] = vector(ux, uy, uz);
+      					   
+			
+		
+		    }
+	
+		    //operator==(myPatch*1.0);
+
+
+	    #};
+    }
+    Right
+    {
+        type            cyclic;
+    }    
+    Left
+    {
+        type            cyclic;
+    } 
+}
+
+
+// ************************************************************************* //
