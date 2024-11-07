@@ -1,0 +1,74 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       volVectorField;
+    location    "0";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0.88 0 0);
+
+boundaryField
+{
+    down
+    {
+        type            symmetry;
+    }
+    top
+    {
+        type            symmetry;
+    }
+    step
+    {
+        type            noSlip;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    inlet
+    {
+        type            turbulentDigitalFilterInlet;
+        fsm             true;
+        n               ( 188 20 );
+        L
+        (
+            0.04    0.0001    0.0001
+            0.0001   0.04     0.0001
+            0.0001   0.0001    0.04
+        );
+        
+        mean		
+        {
+            type        mappedFile;
+            mapMethod   nearest;
+            fieldTable  U;
+        }
+        
+        R   		uniform (0.030976 0.0 0.0 0.030976 0.0 0.030976);
+
+       // Ubalk		0.88;
+        value           $internalField;
+    }
+    Right
+    {
+        type            cyclic;
+    }    
+    Left
+    {
+        type            cyclic;
+    } 
+}
+
+
+// ************************************************************************* //
